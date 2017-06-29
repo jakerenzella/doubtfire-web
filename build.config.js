@@ -127,7 +127,8 @@ module.exports = {
         'vendor/angular-ui-select/dist/select.js',
         'vendor/angulartics/dist/angulartics.min.js',
         'vendor/angulartics-google-analytics/lib/angulartics-google-analytics.js',
-        'vendor/angular-md5/angular-md5.js'
+        'vendor/angular-md5/angular-md5.js',
+        'vendor/videogular/videogular.js'
       ],
       jsmap: [
         'vendor/showdown/dist/showdown.js.map'
