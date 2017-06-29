@@ -30,4 +30,7 @@ angular.module('doubtfire.config.vendor-dependencies', [
   # analytics
   'angulartics'
   'angulartics.google.analytics'
+
+  # Videogular
+  'com.2fdevs.videogular'
 ])
