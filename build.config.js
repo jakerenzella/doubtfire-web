@@ -127,7 +127,9 @@ module.exports = {
         'vendor/angular-ui-select/dist/select.js',
         'vendor/angulartics/dist/angulartics.min.js',
         'vendor/angulartics-google-analytics/lib/angulartics-google-analytics.js',
-        'vendor/angular-md5/angular-md5.js'
+        'vendor/angular-md5/angular-md5.js',
+        'vendor/angularAudioRecorder/dist/angular-audio-recorder.min.js',
+        'vendor/wavesurfer/wavesurfer.min.js'
       ],
       jsmap: [
         'vendor/showdown/dist/showdown.js.map'
