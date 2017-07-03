@@ -30,4 +30,6 @@ angular.module('doubtfire.config.vendor-dependencies', [
   # analytics
   'angulartics'
   'angulartics.google.analytics'
+
+  'angularAudioRecorder'
 ])

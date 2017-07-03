@@ -15,4 +15,5 @@ angular.module('doubtfire.tasks', [
   'doubtfire.tasks.task-submission-viewer'
   'doubtfire.tasks.task-submission-wizard'
   'doubtfire.tasks.task-viewer'
+  'doubtfire.tasks.audio-comment-recorder'
 ])
