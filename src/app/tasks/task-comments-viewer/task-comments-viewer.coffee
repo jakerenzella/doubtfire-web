@@ -12,7 +12,7 @@ angular.module("doubtfire.tasks.task-comments-viewer", [])
     comment: '=?'
     autofocus: '@?'
     refocusOnTaskChange: '@?'
-  controller: ($scope, $modal, $state, $timeout, listenerService, currentUser, TaskFeedback, TaskComment, Task, Project, taskService, alertService, projectService, analyticsService) ->
+  controller: ($scope, $modal, $state, $timeout, listenerService, currentUser, TaskFeedback, TaskComment, Task, Project, AudioRecorderModal, taskService, alertService, projectService, analyticsService) ->
     # Cleanup
     listeners = listenerService.listenTo($scope)
 
@@ -65,4 +65,7 @@ angular.module("doubtfire.tasks.task-comments-viewer", [])
           analyticsService.event "View Task Comments", "Deleted existing comment"
         (response) ->
           alertService.add("danger", response.data.error, 2000)
+
+    $scope.showAudioCommentModal = ->
+      AudioRecorderModal.show()
 )

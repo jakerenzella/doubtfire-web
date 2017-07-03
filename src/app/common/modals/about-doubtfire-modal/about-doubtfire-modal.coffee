@@ -35,7 +35,7 @@ angular.module("doubtfire.common.modals.about-doubtfire-modal", [])
           website:  data.blog or data.html_url
           github:   data.html_url
           handler:  handler
-  
+
   # Get the confugurable, external name of Doubtfire
   $scope.externalName = ExternalName
 )

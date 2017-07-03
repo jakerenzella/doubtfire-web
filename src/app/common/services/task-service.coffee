@@ -511,5 +511,18 @@ angular.module("doubtfire.common.services.tasks", [])
         if failure? and _.isFunction failure
           failure(response)
 
+  taskService.addAudioComment = (task, audioBlob, success, failure) ->
+    TaskComment.create { project_id: task.project().project_id, task_definition_id: task.task_definition_id, audioComment: blob },
+      (response) ->
+        unless task.comments?
+          task.comments = []
+        task.comments.unshift(taskService.mapComment(response))
+        if success? and _.isFunction success
+          success(response)
+        analyticsService.event "View Task Comments", "Added new comment"
+      (response) ->
+        if failure? and _.isFunction failure
+          failure(response)
+
   taskService
 )
