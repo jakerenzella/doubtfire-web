@@ -17,7 +17,29 @@ angular.module("doubtfire.tasks.modals.audio-recorder-modal", [])
 )
 
 .controller('AudioRecorderModalCtrl', ($scope, $modalInstance, $log, taskService) ->
-  $log.info($scope)
+  options = {type: 'audio'}
+  stream = new MediaStream
+
+
+  mediaRecorder = new MediaRecorder(stream, options)
+  mediaRecorder.ondataavailable = handleDataAvailable
+  mediaRecorder.start()
+
+  handleDataAvailable = (event) ->
+    if event.data.size > 0
+      recordedChunks.push event.data
+    else
+      # ...
+    return
+
+  $scope.play = ->
+    superBuffer = new Blob(recordedChunks)
+    videoElement.src = window.URL.createObjectURL(superBuffer)
+    return
+
+  $scope.stop = ->
+    mediaRecorder.stop()
+
   $scope.ok = ->
     $modalInstance.close($scope.recorder)
   $scope.close = ->
