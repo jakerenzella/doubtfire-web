@@ -1,6 +1,6 @@
 angular.module("doubtfire.common.services.units", [])
 
-.factory("unitService", (Unit, UnitRole, Students, Group, projectService, groupService, taskService, $filter, $rootScope, analyticsService, PortfolioSubmission, alertService, Project) ->
+.factory("unitService", (Unit, UnitRole, Students, Group, projectService, groupService, gradeService, taskService, $filter, $rootScope, analyticsService, PortfolioSubmission, alertService, Project, $state) ->
   #
   # The unit service object
   #
@@ -76,6 +76,7 @@ angular.module("doubtfire.common.services.units", [])
           taskDef.seq = index
           taskDef.group_set = _.find(unit.group_sets, {id: taskDef.group_set_id}) if taskDef.group_set_id
           taskDef.hasPlagiarismCheck = -> taskDef.plagiarism_checks.length > 0
+          taskDef.targetGrade = () -> gradeService.grades[taskDef.target_grade]
           taskDef
         )
         # If loading students, call the onSuccess callback as unit.refreshStudents callback
@@ -162,6 +163,18 @@ angular.module("doubtfire.common.services.units", [])
     unit.mapGroupToUnit = (group) ->
       unitService.mapGroupToUnit(unit, group)
 
+    # Refresh the groups within the unit
+    unit.refreshGroups = () ->
+      return unless unit.groups?
+      # Query the groups within the unit.
+      Unit.groups.query( {id: unit.id} ,
+        (success) ->
+          # Save the result as the unit's groups
+          unit.groups = success
+        (failure) ->
+          alertService.add("danger", "Error refreshing unit groups: " + (failure.data?.error || "Unknown cause"), 6000)
+      )
+    
     # Queries the unit for all groups
     unit.getGroups = (groupSetId, onSuccess, onFailure) ->
       groupService.getGroups(unit, groupSetId, onSuccess, onFailure)
@@ -189,29 +202,45 @@ angular.module("doubtfire.common.services.units", [])
     #
     # Push all of the tasks downloaded into the existing student projects
     #
-    unit.incorporateTasks = (tasks) ->
+    unit.incorporateTasks = (tasks, callback) ->
       _.map tasks, (t) ->
         project = unit.findStudent(t.project_id)
         if project?
           unless project.incorporateTask?
             projectService.mapTask t, unit, project
             projectService.addProjectMethods(project, unit)
+          project.incorporateTask(t, callback)
 
-          project.incorporateTask(t)
 
     #
     # Add any missing tasks and return the new collection
     #
     unit.fillWithUnStartedTasks = (tasks, taskDef) ->
+      return unless unit.students?
+
+      # Make sure the task definition is a task definition object from the unit
       taskDef = unit.taskDef(taskDef)
-      #projs = _.filter(unit.students, (s) -> s.target_grade >= taskDef.target_grade)
-      # TODO: (@alexcu) Fix this -- unit.students is sometimes empty
+
+      # Now fill for the students in the unit
       _.map unit.students, (p) ->
         t = _.find tasks, (t) -> t.project_id == p.project_id && t.task_definition_id == taskDef.id
         unless t?
-          _.find p.tasks, (t) -> t.task_definition_id == taskDef.id
-        else
-          t
+          t = _.find p.tasks, (t) -> t.task_definition_id == taskDef.id
+        # If a group task but group data not loaded, go fetch it
+        if t.isGroupTask() and !t.group()?
+          projectService.updateGroups(t.project(), null, true)
+        t
+
+
+    unit.staffAlignmentsForTaskDefinition = (td) ->
+      return if ! td?
+      filteredAlignments = $filter('taskDefinitionFilter')(unit.task_outcome_alignments, td.id)
+      _.chain(filteredAlignments).map((a) ->
+        a.ilo = unit.outcome(a.learning_outcome_id)
+        a
+      )
+      .sortBy((a) -> a.ilo.ilo_number)
+      .value()
 
     # Actually make the request to refresh and load unit data
     unit.refresh(onSuccess, onFailure)
@@ -238,8 +267,11 @@ angular.module("doubtfire.common.services.units", [])
   # Tutorial description
   #
   unitService.tutorialDescription = (tutorial) ->
-    timeDesc = $filter('date')(tutorial.meeting_time, 'shortTime')
-    "#{tutorial.meeting_day.slice(0,3)} at #{timeDesc} by #{tutorial.tutor_name} in #{tutorial.meeting_location}"
+    if (tutorial?)
+      timeDesc = $filter('date')(tutorial.meeting_time, 'shortTime')
+      "#{tutorial.meeting_day.slice(0,3)} at #{timeDesc} by #{tutorial.tutor_name} in #{tutorial.meeting_location}"
+    else
+      "No Tutorial"
 
   #
   # Adds additional unit-related functionality to groups
@@ -263,14 +295,25 @@ angular.module("doubtfire.common.services.units", [])
     # Returns the unit for this student
     student.unit = -> unit
 
+    # Add a tutorial description
+    student.tutorialDescription = () ->
+      unitService.tutorialDescription(student.tutorial)
+
+    student.shortTutorialDescription = () ->
+      if student.tutorial?
+        timeDesc = $filter('date')(student.tutorial.meeting_time, 'shortTime')
+        "#{student.tutorial.meeting_day.slice(0,3)} #{timeDesc} - #{student.tutorial.tutor_name.split(' ')[0]} - #{student.tutorial.meeting_location}"
+      else
+        'No Tutorial'
+
     # Switch's the student's current tutorial to a new tutorial, either specified
     # by object or id.
     student.switchToTutorial = (tutorial) ->
-      newId = if tutorial == null then -1 else if _.isString(tutorial) || _.isNumber(tutorial) then +tutorial else tutorial?.id
+      newId = if tutorial? then (if _.isString(tutorial) || _.isNumber(tutorial) then +tutorial else tutorial?.id) else -1
       analyticsService.event 'Teacher View - Students Tab', 'Changed Student Tutorial'
       Project.update({ id: student.project_id, tutorial_id: newId },
         (project) ->
-          alertService.add "info", "Tutorial updated for #{student.name}", 3000
+          alertService.add "success", "Tutorial updated for #{student.name}", 3000
           student.tutorial_id = project.tutorial_id
           student.tutorial = student.unit().tutorialFromId( student.tutorial_id )
         (response) ->
@@ -305,33 +348,21 @@ angular.module("doubtfire.common.services.units", [])
     student.task_stats = [
       { value: 0, key: taskService.statusKeys[10] }
       { value: 0, key: taskService.statusKeys[0]  }
-      { value: 0, key: taskService.statusKeys[1]  }
-      { value: 0, key: taskService.statusKeys[2]  }
-      { value: 0, key: taskService.statusKeys[3]  }
       { value: 0, key: taskService.statusKeys[4]  }
-      { value: 0, key: taskService.statusKeys[5]  }
       { value: 0, key: taskService.statusKeys[6]  }
-      { value: 0, key: taskService.statusKeys[7]  }
-      { value: 0, key: taskService.statusKeys[8]  }
       { value: 0, key: taskService.statusKeys[9]  }
     ]
 
-    # Returns the task statistic value for the provided key
-    student.taskStatValue = (key) ->
-      student.task_stats[projectService.taskStatIndex[key]].value
-
-    # Returns the student's progress sorting order
-    student.progressSortOrder = ->
-      20 * student.taskStatValue('complete') +
-      15 * (student.taskStatValue('discuss') + student.taskStatValue('demonstrate')) +
-      10 * (student.taskStatValue('ready_to_mark')) +
-      5 * (student.taskStatValue('fix_and_resubmit')) +
-      2 * (student.taskStatValue('working_on_it')) +
-      1 * (student.taskStatValue('need_help'))
+    # Enable the student/project to be able to switch to its view
+    student.viewProject = (as_tutor) ->
+      $state.go("projects/dashboard", {projectId: student.project_id, tutor: as_tutor})
 
     # Returns the student's portfolio submission URL
     student.portfolioUrl = ->
       PortfolioSubmission.getPortfolioUrl(student)
+
+    student.portfolioUrlAsAttachment = ->
+      PortfolioSubmission.getPortfolioUrl(student, true)
 
     # Assigns a grade to a student
     student.assignGrade = (score, rationale) ->
@@ -344,7 +375,8 @@ angular.module("doubtfire.common.services.units", [])
           alertService.add("danger", "Grade was not updated: #{response.data.error}", 8000)
 
     # Call projectService update functions to update stats and task details
-    projectService.updateTaskStats(student, student.stats) if student.stats?
+    projectService.addProjectMethods(student)
+    student.updateTaskStats(student.stats) if student.stats?
     projectService.addTaskDetailsToProject(student, unit)
 
     # Return the mapped student

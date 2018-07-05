@@ -3,24 +3,10 @@ angular.module("doubtfire.common.services.projects", [])
 #
 # Service for handling projects
 #
-.factory("projectService", ($filter, taskService, Project, $rootScope, alertService, Task, Visualisation) ->
+.factory("projectService", ($filter, taskService, Project, $rootScope, alertService, Task, Visualisation, gradeService) ->
   projectService = {}
 
   projectService.loadedProjects = null
-
-  projectService.taskStatIndex = {
-    fail: 0,
-    not_started: 1,
-    do_not_resubmit: 2,
-    redo: 3,
-    need_help: 4,
-    working_on_it: 5,
-    fix_and_resubmit: 6,
-    ready_to_mark: 7,
-    discuss: 8,
-    demonstrate: 9,
-    complete: 10
-  }
 
   $rootScope.$on 'signOut', ->
     projectService.loadedProjects = null
@@ -49,22 +35,6 @@ angular.module("doubtfire.common.services.projects", [])
         onFailure?(failure)
     )
 
-
-  ###
-  projects's can update their task stats
-  converts the | delimited stats to its component arrays
-  @param  student [Student|Project] The student's stats to update
-  ###
-  projectService.updateTaskStats = (project, new_stats_str) ->
-    new_stats = project.task_stats
-    for i, value of new_stats_str.split("|")
-      if i < new_stats.length
-        new_stats[i].value = Math.round(100 * value)
-      else
-        break
-
-    project.task_stats = new_stats
-
   projectService.mapTask = ( task, unit, project ) ->
     td = unit.taskDef(task.task_definition_id)
 
@@ -88,6 +58,8 @@ angular.module("doubtfire.common.services.projects", [])
     task.statusSeq = -> taskService.statusSeq[task.status]
     task.canReuploadEvidence = ->
       taskService.canReuploadEvidence(task)
+    task.requiresFileUpload = ->
+      task.definition.upload_requirements.length > 0
     task.plagiarismDetected = ->
       taskService.plagiarismDetected(task)
     task.isGroupTask = ->
@@ -98,18 +70,34 @@ angular.module("doubtfire.common.services.projects", [])
       projectService.getGroupForTask(task.project(), task)
     task.addComment = (textString, success, failure) ->
       taskService.addComment(task, textString, success, failure)
+    task.applyForExtension = (onSuccess, onError) ->
+      taskService.applyForExtension(task, onSuccess, onError)
     task.staffAlignments = ->
       taskService.staffAlignmentsForTask(task)
+    task.timeToDue = ->
+      if task.daysUntilTargetDate() < 0
+        return ""
+      else
+        days = task.daysUntilTargetDate()
+        if days < 7
+          return "#{days}d"
+        else
+          return "#{Math.floor(days/7)}w"
+    task.targetDate = ->
+      if task.due_date?
+        return task.due_date
+      else
+        return task.definition.target_date
     task.isToBeCompletedSoon = ->
-      task.daysUntilTargetDate() <= 7 && task.daysUntilTargetDate() > 0
+      task.daysUntilTargetDate() <= 7 && task.daysUntilTargetDate() >= 0 && ! task.inFinalState()
     task.isDueSoon = ->
-      task.daysUntilDueDate() <= 7 && task.daysUntilDueDate() > 0
+      task.daysUntilDueDate() <= 7 && task.daysUntilDueDate() >= 0 && ! task.inFinalState()
     task.isOverdue = ->
-      task.daysPastDueDate() > 0
+      task.daysPastDueDate() > 0 && ! task.inFinalState()
     task.isPastTargetDate = ->
-      task.daysPastTargetDate() > 0
+      task.daysPastTargetDate() > 0 && ! task.inFinalState()
     task.isDueToday = ->
-      task.daysUntilDueDate() == 0
+      task.daysUntilDueDate() == 0 && ! task.inFinalState()
     task.daysPastDueDate = ->
       taskService.daysPastDueDate(task)
     task.daysPastTargetDate = ->
@@ -118,10 +106,17 @@ angular.module("doubtfire.common.services.projects", [])
       taskService.daysUntilDueDate(task)
     task.daysUntilTargetDate = ->
       taskService.daysUntilTargetDate(task)
+
+    task.inFinalState = ->
+      task.status in taskService.finalStatuses
+    task.inTerminalState = ->
+      task.status in taskService.terminalStatuses
+
     task.triggerTransition = (status, unitRole) ->
       taskService.triggerTransition(task, status, unitRole)
-    task.updateTaskStatus = (project, new_stats) ->
-      projectService.updateTaskStats(project, new_stats)
+    task.updateTaskStatus = (status, new_stats) ->
+      task.status = status
+      task.project().updateTaskStats(new_stats)
     task.needsSubmissionDetails = ->
       task.has_pdf == null || task.has_pdf == undefined
     task.statusClass = ->
@@ -146,6 +141,10 @@ angular.module("doubtfire.common.services.projects", [])
       taskService.hasTaskKey(task, key)
     task.filterFutureStates = (states) ->
       _.reject states, (s) -> s.status in taskService.rejectFutureStates[task.status]
+    task.gradeDesc = () ->
+      gradeService.gradeAcronyms[task.grade]
+    task.hasGrade = () ->
+      task.grade?
     task.getSubmissionDetails = (onSuccess, onFailure) ->
       return onSuccess?(task) unless task.needsSubmissionDetails()
       Task.SubmissionDetails.get({ id: project.project_id, task_definition_id: task.definition.id },
@@ -184,15 +183,35 @@ angular.module("doubtfire.common.services.projects", [])
     project.tasks = project.tasks.map (task) ->
       projectService.mapTask task, unit, project
     project.tasks = _.sortBy(project.tasks, (t) -> t.definition.abbreviation).reverse()
+    project.target_tasks = () ->
+      projectService.tasksInTargetGrade(project)
     project
 
   projectService.addProjectMethods = (project) ->
+    return project if project.updateTaskStats?
+    #
+    # Update the project's task stats from a new stats string
+    #
+    project.updateTaskStats = (new_stats) ->
+      updated_stats = project.task_stats
+
+      updated_stats[0].value = Math.round(100 * new_stats.red_pct)
+      updated_stats[1].value = Math.round(100 * new_stats.grey_pct)
+      updated_stats[2].value = Math.round(100 * new_stats.orange_pct)
+      updated_stats[3].value = Math.round(100 * new_stats.blue_pct)
+      updated_stats[4].value = Math.round(100 * new_stats.green_pct)
+      
+      # Map the order directly to the project
+      project.orderScale = Math.round(100 * new_stats.order_scale)
+
+      project.task_stats = updated_stats
+
     project.updateBurndownChart = ->
       Project.get { id: project.project_id }, (response) ->
-        project.burndown_chart_data.length = response.burndown_chart_data
+        project.burndown_chart_data = response.burndown_chart_data
         Visualisation.refreshAll()
 
-    project.incorporateTask = (newTask) ->
+    project.incorporateTask = (newTask, callback) ->
       unless project.tasks?
         project.tasks = []
       currentTask = _.find(project.tasks, {task_definition_id: newTask.task_definition_id})
@@ -201,6 +220,9 @@ angular.module("doubtfire.common.services.projects", [])
       else
         project.tasks.push(projectService.mapTask(newTask, unit, project))
         currentTask = newTask
+      if currentTask.isGroupTask() and !currentTask.group()?
+        projectService.updateGroups(currentTask.project(), callback, true)
+      callback?()
       currentTask
 
     project.refresh = (unit_obj) ->
@@ -208,6 +230,8 @@ angular.module("doubtfire.common.services.projects", [])
         _.extend project, response
         if unit_obj
           projectService.addTaskDetailsToProject(project, unit_obj)
+
+    project
 
   projectService.getProject = (project, unit, onSuccess, onFailure) ->
     projectId = if _.isNumber(project) then project else project?.project_id
@@ -226,15 +250,18 @@ angular.module("doubtfire.common.services.projects", [])
           onFailure?(failure)
       )
 
-  projectService.updateGroups = (project) ->
-    if project.groups?
+  projectService.updateGroups = (project, onSuccess, force = false) ->
+    # Only update if the project has groups, or we are forced to update
+    if project.groups? or force
       Project.get { id: project.project_id }, (response) ->
         project.groups = response.groups
+        onSuccess?(project)
+      project.unit().refreshGroups()
 
   projectService.getGroupForTask = (project, task) ->
-    return null if not task.definition.group_set
-
-    _.find project.groups, (group) -> group.group_set_id == task.definition.group_set.id
+    return null unless task.definition.group_set
+    result = _.find project.groups, (group) -> group.group_set_id == task.definition.group_set.id
+    result || _.find project.unit().groups, (group) -> group.group_set_id == task.definition.group_set.id && project.project_id in group.projects
 
   projectService.taskFromTaskDefId = (project, task_definition_id) ->
     project.findTaskForDefinition(task_definition_id)

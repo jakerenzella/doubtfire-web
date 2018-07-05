@@ -12,19 +12,21 @@ angular.module('doubtfire.units.states.tasks.inbox.directives.staff-task-list', 
     unitRole: '='
     filters: '=?'
     showSearchOptions: '=?'
-    getNextTask: '=?'
-    getPreviousTask: '=?'
-  controller: ($scope, $timeout, $filter, Unit, taskService, alertService, currentUser, groupService, listenerService) ->
+  controller: ($scope, $timeout, $filter, Unit, taskService, alertService, currentUser, groupService, listenerService, dateService, projectService) ->
     # Cleanup
     listeners = listenerService.listenTo($scope)
     # Check taskSource exists
     unless $scope.taskData?.source?
       throw Error "Invalid taskData.source provided for task list; supply one of Unit.tasksForTaskInbox, Unit.tasksRequiringFeedback, Unit.taskByTaskDefinition"
+    # showDate from date-service
+    $scope.showDate = dateService.showFullDate
+    # Does the current user have any tutorials?
+    $scope.userHasTutorials = $scope.unit.tutorialsForUserName(currentUser.profile.name)?.length > 0
     # Search option filters
     $scope.filteredTasks = []
     $scope.filters = _.extend({
       studentName: null
-      tutorialIdSelected: if $scope.unitRole.role == 'Tutor' then 'mine' else 'all'
+      tutorialIdSelected: if ($scope.unitRole.role == 'Tutor' || 'Convenor') && $scope.userHasTutorials then 'mine' else 'all'
       tutorials: []
       taskDefinitionIdSelected: null
       taskDefinition: null
@@ -35,15 +37,6 @@ angular.module('doubtfire.units.states.tasks.inbox.directives.staff-task-list', 
       filteredTasks = $filter('tasksInTutorials')(filteredTasks, $scope.filters.tutorials)
       filteredTasks = $filter('tasksWithStudentName')(filteredTasks, $scope.filters.studentName)
       $scope.filteredTasks = filteredTasks
-    # Next/previous task funcs
-    $scope.getNextTask = ->
-      idx = _.findIndex($scope.filteredTasks, (t) -> $scope.isSelectedTask(t))
-      idx = if idx == -1 then 0 else idx + 1
-      $scope.filteredTasks?[idx]
-    $scope.getPreviousTask = ->
-      idx = _.findIndex($scope.filteredTasks, (t) -> $scope.isSelectedTask(t))
-      idx = if idx == -1 then 0 else idx - 1
-      $scope.filteredTasks?[idx]
     # Let's call having a source of tasksForDefinition plus having a task definition
     # auto-selected with the search options open task def mode -- i.e., the mode
     # for selecting tasks by task definitions
@@ -60,7 +53,8 @@ angular.module('doubtfire.units.states.tasks.inbox.directives.staff-task-list', 
       { id: 'mine', description: 'Just my tutorials', abbreviation: '__mine' }
     ]), (tutorial) ->
       unless _.includes(['all', 'mine'], tutorial.id)
-        tutorial.description = tutorial.abbreviation + ' - ' + tutorial.description
+        if tutorial.description.indexOf(tutorial.abbreviation) == -1
+          tutorial.description = tutorial.abbreviation + ' - ' + tutorial.description
       tutorial
     )
     $scope.tutorialIdChanged = ->
@@ -104,7 +98,7 @@ angular.module('doubtfire.units.states.tasks.inbox.directives.staff-task-list', 
       # Tasks for feedback or tasks for task, depending on the data source
       $scope.taskData.source.query { id: $scope.unit.id, task_def_id: $scope.filters.taskDefinitionIdSelected },
         (response) ->
-          $scope.tasks = $scope.unit.incorporateTasks(response)
+          $scope.tasks = $scope.unit.incorporateTasks(response, applyFilters)
           # If loading via task definitions, fill
           if $scope.isTaskDefMode
             unstartedTasks = $scope.unit.fillWithUnStartedTasks($scope.tasks, $scope.filters.taskDefinitionIdSelected)

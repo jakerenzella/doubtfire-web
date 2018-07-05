@@ -9,7 +9,9 @@ angular.module('doubtfire.projects.states.dashboard.directives.progress-dashboar
   scope:
     project: '='
     onUpdateTargetGrade: '='
-  controller: ($scope, projectService, taskService, gradeService, analyticsService, alertService) ->
+  controller: ($scope, $stateParams, projectService, taskService, gradeService, analyticsService, alertService) ->
+    # Is the current user a tutor?
+    $scope.tutor = $stateParams.tutor
     # Number of tasks completed and remaining
     updateTaskCompletionValues  = ->
       completedTasks = projectService.tasksByStatus($scope.project, taskService.acronymKey.COM).length
@@ -25,7 +27,7 @@ angular.module('doubtfire.projects.states.dashboard.directives.progress-dashboar
       projectService.updateProject($scope.project.project_id, { target_grade: newGrade },
         (project) ->
           $scope.project.burndown_chart_data = project.burndown_chart_data
-          projectService.updateTaskStats($scope.project, project.stats)
+          $scope.project.updateTaskStats(project.stats)
           # Update task completions and re-render task status graph
           updateTaskCompletionValues()
           $scope.renderTaskStatusPieChart?()

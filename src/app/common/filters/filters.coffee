@@ -11,7 +11,7 @@ angular.module("doubtfire.common.filters", [])
 .filter('showStudents', ->
   (input, kind, tutorName) ->
     if input
-      if kind == "mine"
+      if kind == "mine" || kind == "myStudents"
         _.filter  input, { tutorial: {tutor_name: tutorName} }
       else
         input
@@ -72,7 +72,7 @@ angular.module("doubtfire.common.filters", [])
 
 .filter('studentsWithTargetGrade', ->
   (input, grade) ->
-    if input
+    if input && grade > -1
       _.filter  input, (student) -> (student?) && student.target_grade == grade
     else
       input
@@ -191,7 +191,14 @@ angular.module("doubtfire.common.filters", [])
   (tasks, tutorialIds) ->
     return tasks unless tasks?
     return [] if _.isEmpty tutorialIds
-    _.filter tasks, (task) -> _.includes(tutorialIds, task.project().tutorial_id)
+    # If task is group task, then use group tutorial, else use project tutorial
+    _.filter tasks, (task) ->
+      if task.isGroupTask()
+        if task.group()?
+          _.includes(tutorialIds, task.group().tutorial_id)
+      else
+        _.includes(tutorialIds, task.project().tutorial_id)
+
 )
 
 .filter('tasksWithStudentName', ->
@@ -242,6 +249,18 @@ angular.module("doubtfire.common.filters", [])
     )
 )
 
+.filter('taskDefinitionName', ->
+  (taskDefinitions, searchName) ->
+    return taskDefinitions unless (searchName? && taskDefinitions?)
+    searchName = searchName.toLowerCase()
+    _.filter(taskDefinitions, (td) ->
+      # Search using name or abbreviation
+      td.name.toLowerCase().indexOf(searchName) >= 0 ||
+      td.abbreviation.toLowerCase().indexOf(searchName) >= 0 ||
+      td.targetGrade().toLowerCase().indexOf(searchName) >= 0
+    )
+)
+
 .filter('humanizedDate', ($filter) ->
   (input) ->
     return unless input?
@@ -259,4 +278,9 @@ angular.module("doubtfire.common.filters", [])
   (input) ->
     return if !input? || input.length == 0
     input[0].toLowerCase() + input.substring(1)
+)
+
+.filter('isActiveUnitRole', ->
+  (unitRoles) ->
+    _.filter(unitRoles, (ur) -> ur.active )
 )
