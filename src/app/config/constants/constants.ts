@@ -18,15 +18,21 @@ export class DoubtfireConstants {
     'jakerenzella'         // Jake Renzella
   ];
   public apiURL: string = apiURL;
-  private _externalName: string = "Loading...";
+  public externalName: ExternalNameResponseFormat = { externalName: "Loading..." };
   private _externalNamePromise: Promise<ExternalNameResponseFormat>;
 
-  get externalName(): Promise<ExternalNameResponseFormat> {
-    if (this._externalName == "Loading...") {
+  get loadExternalName(): Promise<ExternalNameResponseFormat> {
+    if (this.externalName.externalName == "Loading...") {
       this._externalNamePromise = this.http.get<ExternalNameResponseFormat>(`${this.apiURL}/settings`).toPromise();
       this._externalNamePromise.then(res => {
         // Cache the externalName in a private field when you get it back
-        this._externalName = res.externalName
+        var that = this;
+        setTimeout(function () {
+          that.externalName.externalName = res.externalName;
+          console.log("Name changed");
+
+          //your code to be executed after 1 second
+        }, 4000)
       });
       return this._externalNamePromise;
     }

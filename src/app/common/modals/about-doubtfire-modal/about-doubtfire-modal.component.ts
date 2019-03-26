@@ -8,6 +8,7 @@ import { DoubtfireConstants } from 'src/app/config/constants/constants';
 
 import { GithubProfile } from '../about-doubtfire-modal/GithubProfile';
 import { AboutDoubtfireModalService } from '../about-doubtfire-modal/about-doubtfire-modal.service';
+import { constants } from 'os';
 
 /**
  * The about doubtfire modal service - used to create and show the modal
@@ -41,6 +42,7 @@ export class AboutDoubtfireModalContent implements OnInit {
     public constants: DoubtfireConstants) { }
 
   ngOnInit() {
+    console.log(this.constants.externalName.externalName);
     this.contributors = <GithubProfile[]>this.constants.mainContributors.map(c => ({
       avatar_url: '/assets/images/person-unknown.gif',
       login: c

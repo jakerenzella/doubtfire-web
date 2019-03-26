@@ -31,7 +31,7 @@ export class AppModule {
 
     setTheme('bs3'); // or 'bs4'
 
-    this.constants.externalName.then(res => {
+    this.constants.loadExternalName.then(res => {
       this.title.setTitle(res.externalName);
     })
   }
