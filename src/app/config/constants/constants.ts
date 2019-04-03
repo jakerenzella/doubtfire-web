@@ -14,7 +14,7 @@ export class DoubtfireConstants {
     this.loadExternalName();
   }
 
-  public mainContributors: string[] = [
+  public mainContributors: ReadonlyArray<string> = [
     'macite',              // Andrew Cain
     'alexcu',              // Alex Cummaudo
     'jakerenzella'         // Jake Renzella
