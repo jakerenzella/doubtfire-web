@@ -14,3 +14,4 @@ platformBrowserDynamic().bootstrapModule(AppModule)
   .catch(err => console.log(err));
 
 console.log(DoubtfireAppModule.angularJS.version)
+// DoubtfireAppModule
