@@ -7,7 +7,6 @@ import { AboutDoubtfireModalService } from '../about-doubtfire-modal/about-doubt
 import { GithubProfile } from '../about-doubtfire-modal/GithubProfile';
 
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material';
-import { Unit } from 'src/app/ajs-upgraded-providers';
 
 export interface AboutDialogData {
   externalName: string;
@@ -34,7 +33,7 @@ export class AboutDoubtfireModal {
     this.aboutDialogData = {
       externalName: '',
       contributors: []
-    }
+    };
 
     this.aboutDialogData.contributors = <GithubProfile[]>this.constants.mainContributors.map(c => ({
       avatar_url: '/assets/images/person-unknown.gif',

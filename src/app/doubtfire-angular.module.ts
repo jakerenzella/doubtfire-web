@@ -17,7 +17,7 @@ import { DoubtfireConstants } from 'src/app/config/constants/doubtfire-constants
 
 import { DoubtfireAngularJSModule } from 'src/app/doubtfire-angularjs.module';
 import { HttpErrorInterceptor } from './common/services/http-error.interceptor';
-import { unitProvider, taskServiceProvider, analyticsServiceProvider, taskProvider, alertServiceProvider, CommentResourceServiceProvider, AudioRecorderProvider, AudioRecorderServiceProvider } from './ajs-upgraded-providers';
+import { unitProvider, taskServiceProvider, analyticsServiceProvider, taskProvider, alertServiceProvider, CommentResourceServiceProvider, AudioRecorderProvider, AudioRecorderServiceProvider, DiscussionCommentServiceProvider } from './ajs-upgraded-providers';
 import { TaskCommentComposerComponent } from 'src/app/tasks/task-comment-composer/task-comment-composer.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
@@ -29,6 +29,7 @@ import { IntelligentDiscussionPlayerComponent, IntelligentDiscussionDialog } fro
 import { MicrophoneTesterComponent } from './common/audio-recorder/audio/microphone-tester/microphone-tester.component';
 import { IntelligentDiscussionRecorderComponent } from './tasks/task-comments-viewer/intelligent-discussion-player/intelligent-discussion-recorder/intelligent-discussion-recorder.component';
 import {FlexLayoutModule} from "@angular/flex-layout";
+import { DiscussionComment } from './api/models/discussion-comment';
 
 @NgModule({
   // components
@@ -67,6 +68,7 @@ import {FlexLayoutModule} from "@angular/flex-layout";
   ],
   // Services
   providers: [
+    DiscussionComment,
     unitProvider,
     taskServiceProvider,
     analyticsServiceProvider,
@@ -75,6 +77,7 @@ import {FlexLayoutModule} from "@angular/flex-layout";
     CommentResourceServiceProvider,
     AudioRecorderProvider,
     AudioRecorderServiceProvider,
+    DiscussionCommentServiceProvider,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpErrorInterceptor,

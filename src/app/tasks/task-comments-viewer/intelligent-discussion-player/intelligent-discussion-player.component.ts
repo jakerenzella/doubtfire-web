@@ -5,17 +5,21 @@ import { IntelligentDiscussionPlayerService } from './intelligent-discussion-pla
 import * as moment from 'moment';
 import { MicrophoneTesterComponent } from 'src/app/common/audio-recorder/audio/microphone-tester/microphone-tester.component';
 import { IntelligentDiscussionRecorderComponent } from './intelligent-discussion-recorder/intelligent-discussion-recorder.component';
-
+import { DiscussionComment, DiscussionCommentService } from 'src/app/api/models/discussion-comment';
 
 @Component({
   selector: 'intelligent-discussion-player',
   templateUrl: './intelligent-discussion-player.component.html',
-  styleUrls: ['./intelligent-discussion-player.component.scss']
+  styleUrls: ['./intelligent-discussion-player.component.scss'],
 })
 export class IntelligentDiscussionPlayerComponent implements OnInit {
   @Input() parentCommentId: number;
+  private discussionComment: DiscussionComment;
 
-  constructor(public dialog: MatDialog, ) {
+  constructor(
+    public dialog: MatDialog,
+
+    private dcs: DiscussionCommentService) {
   }
 
   ngOnInit() {
@@ -25,6 +29,12 @@ export class IntelligentDiscussionPlayerComponent implements OnInit {
   sendRecording(): void { }
 
   beginDiscussion(): void {
+    console.log(this.parentCommentId);
+    let id = this.parentCommentId;
+    this.dcs.read(id)
+      .subscribe((data: DiscussionComment) => this.discussionComment = { ...data });
+
+    // this.discussionService.GetDiscussionComment(this.parentCommentId);
     const dialogRef = this.dialog.open(IntelligentDiscussionDialog, {
       maxWidth: '800px',
       disableClose: true,
@@ -71,7 +81,6 @@ export class IntelligentDiscussionDialog implements OnInit {
 
   constructor(
     public dialogRef: MatDialogRef<IntelligentDiscussionDialog>,
-    private discussionService: IntelligentDiscussionPlayerService,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) { }
 
@@ -140,22 +149,22 @@ export class IntelligentDiscussionDialog implements OnInit {
   }
 
   getPrompts(): void {
-    this.discussionService.GetDiscussionFiles().subscribe(response => {
-      // this.prompts = response.prompts;
-      this.prompts = [{
-        id: 0,
-        url: 'http://www.noiseaddicts.com/samples_1w72b820/160.mp3',
-        responseRecorded: false
-      }, {
-        id: 1,
-        url: 'http://www.noiseaddicts.com/samples_1w72b820/160.mp3',
-        responseRecorded: false
-      }, {
-        id: 2,
-        url: 'http://www.noiseaddicts.com/samples_1w72b820/160.mp3',
-        responseRecorded: false
-      }];
-      this.audioPromptsLoaded = true;
-    });
+    // this.discussionService.GetDiscussionFiles().subscribe(response => {
+    //   // this.prompts = response.prompts;
+    //   this.prompts = [{
+    //     id: 0,
+    //     url: 'http://www.noiseaddicts.com/samples_1w72b820/160.mp3',
+    //     responseRecorded: false
+    //   }, {
+    //     id: 1,
+    //     url: 'http://www.noiseaddicts.com/samples_1w72b820/160.mp3',
+    //     responseRecorded: false
+    //   }, {
+    //     id: 2,
+    //     url: 'http://www.noiseaddicts.com/samples_1w72b820/160.mp3',
+    //     responseRecorded: false
+    //   }];
+    //   this.audioPromptsLoaded = true;
+    // });
   }
 }
