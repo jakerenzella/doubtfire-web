@@ -11,7 +11,7 @@ angular.module('doubtfire.groups.group-set-manager', [])
     unit: '='
     unitRole: '='
     project: '='
-    selectedGroupSet: '='
+    selectedGroupSet: '=?'
     showGroupSetSelector: '=?'
   controller: ($scope, GroupSet, Group, GroupMember, gradeService, alertService, projectService) ->
     if !$scope.unitRole? && !$scope.project?

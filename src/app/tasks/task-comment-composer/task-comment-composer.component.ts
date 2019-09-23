@@ -63,38 +63,11 @@ export class TaskCommentComposerComponent implements OnInit {
     }
   }
 
-  // clearEnqueuedUpload(upload) {
-  //   upload.model = null;
-  //   return this.refreshShownUploadZones();
-  // }
-
-  // Upload image files as comments to a given task
-  // postAttachmentComment() {
-  //   this.ts.addMediaComment(this.commentResourceService.task, $scope.upload.model[0],
-  //     success => this.ts.scrollDown(),
-  //     failure => this.alerts.add('danger', `Failed to post image. ${(failure.data != null ? failure.data.error : undefined)}`));
-  //   return $scope.clearEnqueuedUpload($scope.upload);
-  // }
-
-  // Will refresh which shown drop zones are shown
-  // Only changes if showing one drop zone
-  // private refreshShownUploadZones() {
-  //   if (this.singleDropZone) {
-  //     // Find the first-most empty model in each zone
-  //     const firstEmptyZone = _.find($scope.uploadZones, zone => (zone.model == null) || (zone.model.length === 0));
-  //     if (firstEmptyZone != null) {
-  //       return $scope.shownUploadZones = [firstEmptyZone];
-  //     } else {
-  //       return $scope.shownUploadZones = [];
-  //     }
-  //   }
-  // };
-
   addComment(comment: string) {
     this.ts.addComment(this.task, comment, 'text',
       (success) => {
         this.comment.text = '';
-        this.analytics.event('Vie Comments', 'Added new comment');
+        this.analytics.event('View Comments', 'Added new comment');
         this.ts.scrollDown();
       },
       failure =>
@@ -102,4 +75,3 @@ export class TaskCommentComposerComponent implements OnInit {
     );
   }
 }
-

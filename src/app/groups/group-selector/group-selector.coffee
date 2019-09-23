@@ -14,7 +14,7 @@ angular.module('doubtfire.groups.group-selector', [])
     # Use unit role for tutor context
     unitRole: "=?"
     # Pass in a groupset to set the groupset context
-    selectedGroupSet: '='
+    selectedGroupSet: '=?'
     # Bind the selected group for switching
     selectedGroup: '=?'
     # Shows the groupset selector
@@ -32,8 +32,10 @@ angular.module('doubtfire.groups.group-selector', [])
     # Filtering
     applyFilters = ->
       if $scope.unitRole? # apply staff filter
+        console.log("staff")
         filteredGroups = $filter('groupsInTutorials')($scope.selectedGroupSet.groups, $scope.unitRole, $scope.staffFilter)
       else # apply project filter
+        console.log("student")
         filteredGroups = $filter('groupsForStudent')($scope.selectedGroupSet.groups, $scope.project, $scope.selectedGroupSet)
       # Apply remaining filters
       $scope.filteredGroups = $filter('paginateAndSort')(filteredGroups, $scope.pagination, $scope.tableSort)
