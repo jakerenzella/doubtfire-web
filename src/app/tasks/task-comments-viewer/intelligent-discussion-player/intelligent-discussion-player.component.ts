@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit, ViewChild, Input } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material';
 import { timer, Subscription } from 'rxjs';
-import { IntelligentDiscussionPlayerService } from './intelligent-discussion-player.service';
+// import { IntelligentDiscussionPlayerService } from './intelligent-discussion-player.service';
 import * as moment from 'moment';
 import { MicrophoneTesterComponent } from 'src/app/common/audio-recorder/audio/microphone-tester/microphone-tester.component';
 import { IntelligentDiscussionRecorderComponent } from './intelligent-discussion-recorder/intelligent-discussion-recorder.component';
@@ -60,7 +60,7 @@ interface Prompt {
   selector: 'intelligent-discussion-dialog',
   templateUrl: 'intelligent-discussion-dialog.html',
   styleUrls: ['./intelligent-discussion-player.component.scss'],
-  providers: [IntelligentDiscussionPlayerService]
+  // providers: [IntelligentDiscussionPlayerService]
 })
 export class IntelligentDiscussionDialog implements OnInit {
   // TODO: Check that all these are needed or can be cleaned up.

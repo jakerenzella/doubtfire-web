@@ -10,11 +10,11 @@ export class DiscussionComment extends Resource {
 }
 
 export class DiscussionCommentService extends ResourceService<DiscussionComment> {
-  constructor(httpClient: HttpClient,
-    constants: DoubtfireConstants) {
-    super(
-      httpClient,
-      'discussion_comments',
-      constants);
-  }
+  // constructor(httpClient: HttpClient,
+  //   constants: DoubtfireConstants) {
+  //   super(
+  //     httpClient,
+  //     'discussion_comments',
+  //     constants);
+  // }
 }
