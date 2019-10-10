@@ -8,7 +8,7 @@ const KEYS =
     'abbreviation',
   ];
 
-type campusModes = 'timetable' | 'automatic' | 'manual';
+export type campusModes = 'timetable' | 'automatic' | 'manual';
 
 export class Campus extends Entity {
   id: number;

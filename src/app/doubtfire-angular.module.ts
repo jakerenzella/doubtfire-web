@@ -1,4 +1,4 @@
-import { NgModule, Injector } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { BrowserModule, Title } from '@angular/platform-browser';
 import { UpgradeModule } from '@angular/upgrade/static';
 

@@ -1,6 +1,7 @@
 import { Campus } from './campus';
-import { CacheableEntityService } from '../cacheableentity.service';
 import { EntityService } from '../entity.service';
+import { Injectable } from '@angular/core';
+
 
 export class CampusService extends EntityService<Campus> {
 

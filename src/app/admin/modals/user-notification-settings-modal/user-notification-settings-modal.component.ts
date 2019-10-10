@@ -2,8 +2,6 @@ import { Injectable, Component, Inject } from '@angular/core';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { UserService } from 'src/app/api/models/user/user.service';
 import { User } from 'src/app/api/models/user/user';
-import { Campus } from 'src/app/api/models/campus/campus';
-import { CampusService } from 'src/app/api/models/campus/campus.service';
 
 @Component({
   selector: 'user-notification-modal',

@@ -15,7 +15,7 @@ import 'node_modules/angular-local-storage/dist/angular-local-storage.js';
 import 'node_modules/angular-resource/angular-resource.js';
 import 'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js';
 import 'node_modules/angular-nvd3/dist/angular-nvd3.js';
-import 'node_modules/angular-file-upload/angular-file-upload.js';
+import 'node_modules/angular-file-upload/dist/angular-file-upload.js';
 import 'node_modules/ng-file-upload/dist/ng-file-upload-all.min.js';
 import 'node_modules/angular-sanitize/angular-sanitize.js';
 import 'node_modules/ng-csv/build/ng-csv.js';

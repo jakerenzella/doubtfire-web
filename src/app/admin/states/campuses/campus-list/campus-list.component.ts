@@ -1,5 +1,5 @@
-import { Component, OnInit, Input, Inject, ViewChild } from '@angular/core';
-import { currentUser, alertService } from 'src/app/ajs-upgraded-providers';
+import { Component, OnInit, Inject, ViewChild } from '@angular/core';
+import { alertService } from 'src/app/ajs-upgraded-providers';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource, MatTable } from '@angular/material/table';
 import { FormControl } from '@angular/forms';
@@ -21,7 +21,7 @@ export class CampusListComponent implements OnInit {
   sync = new FormControl('');
 
   // Set up the table
-  columns: string[] = ['abbreviation', 'name', 'mode', 'options'];
+  columns: string[] = ['name', 'abbreviation', 'mode', 'options'];
   campuses: Campus[] = new Array<Campus>();
   dataSource = new MatTableDataSource(this.campuses);
 
@@ -30,7 +30,6 @@ export class CampusListComponent implements OnInit {
 
   constructor(
     private campusService: CampusService,
-    // tslint:disable-next-line: no-shadowed-variable
     @Inject(alertService) private alertService: any
   ) { }
 
