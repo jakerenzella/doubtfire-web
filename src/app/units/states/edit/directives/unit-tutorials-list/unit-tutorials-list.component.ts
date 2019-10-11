@@ -1,7 +1,8 @@
 import { Component, OnInit, Input, Inject, ViewChild } from '@angular/core';
-import { currentUser, alertService } from 'src/app/ajs-upgraded-providers';
+import { alertService } from 'src/app/ajs-upgraded-providers';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource, MatTable } from '@angular/material/table';
+import { CurrentUser } from 'src/app/sessions/current-user/current-user';
 
 const campuses = ['Burwood', 'Coud'];
 const sampleSyncData = [
@@ -33,7 +34,7 @@ export class UnitTutorialsListComponent implements OnInit {
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
   constructor(
-    @Inject(currentUser) private currentUser: any,
+    private currentUser: CurrentUser,
     @Inject(alertService) private alertService: any,
   ) { }
 

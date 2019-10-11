@@ -6,12 +6,12 @@ import {
   HttpInterceptor
 } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { currentUser } from 'src/app/ajs-upgraded-providers';
 import API_URL from 'src/app/config/constants/apiURL';
+import { CurrentUser } from 'src/app/sessions/current-user/current-user';
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {
   constructor(
-    @Inject(currentUser) private currentUser: any,
+    private currentUser: CurrentUser,
   ) { }
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {

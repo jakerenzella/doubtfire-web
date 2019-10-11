@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Inject, ViewChild } from '@angular/core';
-import { currentUser, alertService } from 'src/app/ajs-upgraded-providers';
+import { alertService } from 'src/app/ajs-upgraded-providers';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 

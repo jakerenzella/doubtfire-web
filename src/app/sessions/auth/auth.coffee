@@ -6,7 +6,7 @@ angular.module("doubtfire.sessions.auth", [
 #
 # Authentication factory object for checking all auth
 #
-.factory("auth", ($http, $cookieStore, $timeout, usernameCookie, currentUser, authRoles, localStorageService, doubtfireLoginTimeCookie, rememberDoubtfireCredentialsCookie, DoubtfireConstants, $rootScope) ->
+.factory("auth", ($http, $cookieStore, $timeout, UserService, usernameCookie, currentUser, authRoles, localStorageService, doubtfireLoginTimeCookie, rememberDoubtfireCredentialsCookie, DoubtfireConstants, $rootScope) ->
 
   defaultAnonymousUser = _.clone currentUser
 
@@ -36,6 +36,8 @@ angular.module("doubtfire.sessions.auth", [
 
   # Private factory methods.
   tryChangeUser = (user) ->
+    if user.profile?
+      user.profile = UserService.createInstanceFrom(user.profile)
     if user? and user.role in authRoles
       # Clear the current user object and populate it with the new values.
       # Note how the actual user object reference doesn't change.

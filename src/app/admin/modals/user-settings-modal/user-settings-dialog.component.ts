@@ -3,10 +3,11 @@
 //
 import { Component, Inject, Injectable } from '@angular/core';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { analyticsService, auth, currentUser, alertService } from 'src/app/ajs-upgraded-providers';
+import { analyticsService, auth, alertService } from 'src/app/ajs-upgraded-providers';
 import { DoubtfireConstants } from 'src/app/config/constants/doubtfire-constants';
 import { UserService } from 'src/app/api/models/user/user.service';
 import { User } from 'src/app/api/models/user/user';
+import { CurrentUser } from 'src/app/sessions/current-user/current-user';
 
 interface UserSettingsDialogData {
   user: User;
@@ -64,7 +65,7 @@ export class UserSettingsDialogContent {
 export class UserSettingsDialog {
   userSettingsDialogData: UserSettingsDialogData;
   constructor(public dialog: MatDialog,
-    @Inject(currentUser) private currentUser: User,
+    @Inject(CurrentUser) private currentUser: User,
     private constants: DoubtfireConstants) {
     const user = new User();
     this.userSettingsDialogData = {

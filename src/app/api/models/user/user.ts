@@ -2,7 +2,7 @@ import { Entity } from '../entity';
 
 export type Tutor = User;
 
-const KEYS =
+const SERIALISATION_KEYS =
   [
     'id',
     'name',
@@ -35,15 +35,16 @@ export class User extends Entity {
   receive_portfolio_notifications: boolean;
   receive_feedback_notifications: boolean;
   has_run_first_time_setup: boolean;
+  authenticationToken: string;
 
   toJson(): any {
     return {
-      user: super.toJsonWithKeys(KEYS)
+      user: super.toJsonWithKeys(SERIALISATION_KEYS)
     };
   }
 
   public updateFromJson(data: any): void {
-    this.setFromJson(data, KEYS);
+    this.setFromJson(data, SERIALISATION_KEYS);
   }
   public get key(): string {
     return this.id.toString();

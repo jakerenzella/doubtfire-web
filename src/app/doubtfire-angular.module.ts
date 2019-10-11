@@ -41,7 +41,6 @@ import { HttpErrorInterceptor } from './common/services/http-error.interceptor';
 import { TokenInterceptor } from './common/services/http-authentication.interceptor';
 import {
   unitProvider,
-  currentUserProvider,
   authProvider,
   taskServiceProvider,
   analyticsServiceProvider,
@@ -51,7 +50,6 @@ import {
   AudioRecorderProvider,
   AudioRecorderServiceProvider,
   userProvider,
-  currentUser,
   ifRoleProvider
 } from './ajs-upgraded-providers';
 import {
@@ -92,6 +90,7 @@ import { UnitTutorialsListComponent } from './units/states/edit/directives/unit-
 import { ActivityListComponent } from './admin/states/activities/activity-list/activity-list.component';
 import { InstitutionSettingsComponent } from './units/states/institution-settings/institution-settings.component';
 import { CampusService } from './api/models/campus/campus.service';
+import { CurrentUser } from './sessions/current-user/current-user';
 
 @NgModule({
   // components
@@ -152,15 +151,14 @@ import { CampusService } from './api/models/campus/campus.service';
   ],
   // Services
   providers: [
+    CurrentUser,
     UserService,
     CampusService,
     userProvider,
     unitProvider,
     ifRoleProvider,
     authProvider,
-    currentUserProvider,
     taskServiceProvider,
-    currentUserProvider,
     analyticsServiceProvider,
     taskProvider,
     alertServiceProvider,
@@ -171,7 +169,7 @@ import { CampusService } from './api/models/campus/campus.service';
       provide: HTTP_INTERCEPTORS,
       useClass: TokenInterceptor,
       multi: true,
-      deps: [currentUser]
+      deps: [CurrentUser]
     },
     {
       provide: HTTP_INTERCEPTORS,

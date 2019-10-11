@@ -5,7 +5,6 @@ import { InjectionToken } from '@angular/core';
 export const Unit = new InjectionToken('Unit');
 export const User = new InjectionToken('User');
 export const auth = new InjectionToken('auth');
-export const currentUser = new InjectionToken('currentUser');
 export const Task = new InjectionToken('Task');
 export const taskService = new InjectionToken('taskService');
 export const analyticsService = new InjectionToken('analyticsService');
@@ -14,7 +13,6 @@ export const alertService = new InjectionToken('AlertService');
 export const audioRecorder = new InjectionToken('audioRecorder');
 export const audioRecorderService = new InjectionToken('recorderService');
 export const ifRole = new InjectionToken('ifRole');
-
 
 // Define a provider for the above injection token...
 // It will get the service from AngularJS via the factory
@@ -42,11 +40,6 @@ export const authProvider = {
   deps: ['$injector']
 };
 
-export const currentUserProvider = {
-  provide: currentUser,
-  useFactory: (i: any) => i.get('currentUser'),
-  deps: ['$injector']
-};
 
 export const taskServiceProvider = {
   provide: taskService,

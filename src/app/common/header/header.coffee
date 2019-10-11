@@ -13,7 +13,7 @@ angular.module('doubtfire.common.header', [
   # Opens the user settings modal
   #
   $scope.openUserSettings = ->
-    UserSettingsDialog.show $scope.currentUser
+    UserSettingsDialog.show $scope.currentUser.profile
 
   #
   # Opens the notification settings modal

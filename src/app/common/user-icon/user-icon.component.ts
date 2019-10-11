@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, Inject } from '@angular/core';
-import { currentUser } from 'src/app/ajs-upgraded-providers';
+// import {  } from 'src/app/ajs-upgraded-providers';
 import { Md5 } from 'node_modules/ts-md5/dist/md5';
+import { CurrentUser } from 'src/app/sessions/current-user/current-user';
 
 @Component({
   selector: 'user-icon',
@@ -13,7 +14,7 @@ export class UserIconComponent implements OnInit {
   @Input() size: number;
 
   constructor(
-    @Inject(currentUser) private currentUser: any) {
+    private currentUser: CurrentUser) {
   }
 
   get userBackgroundStyle() {
