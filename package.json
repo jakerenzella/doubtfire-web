@@ -66,6 +66,7 @@
     "moment": "^2.24.0",
     "ng-csv": "0.2.3",
     "ng-file-upload": "~5.0.9",
+    "ng-waveform": "^0.2.0",
     "ngx-bootstrap": "^6.1.0",
     "nvd3": "1.8.1",
     "rxjs": "^6.6.3",
@@ -139,7 +140,7 @@
   },
   "husky": {
     "hooks": {
-        "pre-commit": "pretty-quick --staged && ng lint"
+      "pre-commit": "pretty-quick --staged && ng lint"
     }
-}
+  }
 }
