@@ -1,11 +1,13 @@
 import { Component, Inject, OnInit, ViewChild, Input, AfterViewInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
-import { timer, Subscription } from 'rxjs';
+import { timer, Subscription, BehaviorSubject } from 'rxjs';
 import { IntelligentDiscussionPlayerService } from './intelligent-discussion-player.service';
 import * as moment from 'moment';
 import { MicrophoneTesterComponent } from 'src/app/common/audio-recorder/audio/microphone-tester/microphone-tester.component';
 import { IntelligentDiscussionRecorderComponent } from './intelligent-discussion-recorder/intelligent-discussion-recorder.component';
 import { AudioPlayerComponent } from 'src/app/common/audio-player/audio-player.component';
+import { Task } from 'src/app/ajs-upgraded-providers';
+import { ITimeUpdateEvent, NgWaveformComponent, IRegionPositions } from 'ng-waveform';
 
 interface DiscussionComment {
   created_at: string;
@@ -24,17 +26,77 @@ interface DiscussionComment {
   styleUrls: ['./intelligent-discussion-player.component.scss'],
   providers: [IntelligentDiscussionPlayerService],
 })
-export class IntelligentDiscussionPlayerComponent implements AfterViewInit {
+export class IntelligentDiscussionPlayerComponent extends AudioPlayerComponent implements AfterViewInit {
   @Input() discussion: DiscussionComment;
   @Input() task: any;
-  @ViewChild('player') audioPlayer: AudioPlayerComponent;
+  @ViewChild('waveform', { static: false }) waveform: NgWaveformComponent;
+
   loading: boolean = false;
   audioProgress: number = 0;
+  segments: { responseDuration: IRegionPositions; prompts: IRegionPositions[] };
+  trackLoadTime: number;
 
-  constructor(public dialog: MatDialog, private discussionService: IntelligentDiscussionPlayerService) {}
+  playbackSrc = { url: '' };
+  waveFormisPlaying: boolean = false;
+
+  constructor(
+    @Inject(Task) TaskModel,
+    public dialog: MatDialog,
+    private discussionService: IntelligentDiscussionPlayerService
+  ) {
+    super(TaskModel);
+  }
+
+  setDurationFromAudio(audioURL: string, out: IRegionPositions, previousPosition?: IRegionPositions) {
+    const tempAudioElement = new Audio(audioURL);
+
+    tempAudioElement.addEventListener('loadeddata', () => {
+      if (!previousPosition) {
+        out.start = 0;
+        out.end = tempAudioElement.duration;
+      } else {
+        out.start = previousPosition.end;
+        out.end = tempAudioElement.duration;
+      }
+    });
+  }
+
+  ngOnInit() {
+    this.loadSegmentData();
+  }
+
+  loadSegmentData() {
+    this.segments = {
+      responseDuration: { start: 0, end: 0 },
+      prompts: new Array(this.discussion.number_of_prompts),
+    };
+    this.segments.prompts.fill({ start: 0, end: 0 });
+    this.setDurationFromAudio(this.responseUrl, this.segments.responseDuration);
+
+    // set prompt segments
+    for (let index = 0; index < this.segments.prompts.length; index++) {
+      // console.log("Setting prompt duration: " + index)
+      const element = this.segments.prompts[index];
+      let previousDuration = null;
+
+      if (index > 0) {
+        previousDuration = this.segments.prompts[index - 1];
+      }
+
+      const promptUrl = this.discussionService.getDiscussionPromptUrl(this.task, this.discussion.id, index);
+      this.setDurationFromAudio(promptUrl, element, previousDuration);
+    }
+  }
 
   ngAfterViewInit() {
     this.setPromptTrack('response');
+
+    this.waveform.timeUpdate.subscribe(() => {
+      if (this.waveform.progress >= 100) {
+        this.waveform.pause();
+        this.waveFormisPlaying = false;
+      }
+    });
   }
 
   get responseAvailable() {
@@ -45,15 +107,72 @@ export class IntelligentDiscussionPlayerComponent implements AfterViewInit {
     return this.task.project().unit().my_role !== 'Student';
   }
 
-  setPromptTrack(track: string, promptNumber?: number) {
-    let url: string = '';
-    if (track === 'prompt') {
-      url = this.discussionService.getDiscussionPromptUrl(this.task, this.discussion.id, promptNumber);
-    } else {
-      url = this.discussionService.getDiscussionResponseUrl(this.task, this.discussion.id);
-    }
+  discussionPromptUrls(): string[] {
+    return Array(this.discussion.number_of_prompts)
+      .fill(null)
+      .map((x, i) => this.discussionService.getDiscussionPromptUrl(this.task, this.discussion.id, i));
+  }
 
-    this.audioPlayer.setSrc(url);
+  get responseUrl() {
+    return this.discussionService.getDiscussionResponseUrl(this.task, this.discussion.id);
+  }
+
+  onPausePlayClick() {
+    this.waveFormisPlaying = !this.waveFormisPlaying;
+    if (this.waveFormisPlaying) {
+      this.waveform.play();
+    } else {
+      this.waveform.pause();
+    }
+  }
+
+  onTrackLoaded(time: number) {
+    this.trackLoadTime = time;
+    // this.waveform.play(this.firstPromptDuration);
+    // this.waveform.pause();
+  }
+
+  setPlaybackRegion(track: string, promptNumber?: number) {
+    if (track === 'prompt') {
+      console.log(track + promptNumber);
+      const region = this.segments.prompts[promptNumber];
+      console.log(region);
+      this.waveform.setRegionStart(region.start);
+      this.waveform.setRegionEnd(region.end);
+    } else {
+      console.log(track + promptNumber);
+      // const region = this.segments.responseDuration.getValue();
+      const responseStart = this.segments.prompts[promptNumber].end;
+      const nextPrompt = this.segments.prompts[promptNumber + 1];
+      // tslint:disable-next-line: no-bitwise
+      const responseEnd = nextPrompt?.start | this.segments.responseDuration.end;
+
+      console.log({ start: responseStart, end: responseEnd });
+      this.waveform.setRegionStart(responseStart);
+      this.waveform.setRegionEnd(responseEnd);
+    }
+  }
+
+  setPromptTrack(track: string, promptNumber?: number) {
+    if (track === 'prompt') {
+      // this.waveform.trackLoaded.unsubscribe();
+      this.waveform.useRegion = false;
+      // this.waveform.useRegion = false;
+      // this.waveform.progress = 0;
+      this.playbackSrc.url = this.discussionService.getDiscussionPromptUrl(this.task, this.discussion.id, promptNumber);
+      // this.waveform.setRegionEnd();
+    } else {
+      this.waveform.useRegion = true;
+      const sub = this.waveform.trackLoaded.subscribe(() => {
+        const responseStart = this.segments.prompts[0].end;
+        console.log(responseStart, this.segments.responseDuration.end);
+        this.waveform.setRegionStart(responseStart);
+        this.waveform.setRegionEnd(this.segments.responseDuration.end);
+        sub.unsubscribe();
+      });
+      // this.waveform.useRegion = true;
+      this.playbackSrc.url = this.responseUrl;
+    }
   }
 
   beginDiscussion(): void {
@@ -63,7 +182,7 @@ export class IntelligentDiscussionPlayerComponent implements AfterViewInit {
       data: {
         dc: this.discussion,
         task: this.task,
-        audioRef: this.audioPlayer.audio,
+        audioRef: this.audio,
       },
       maxWidth: '800px',
       disableClose: true,
