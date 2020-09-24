@@ -47,6 +47,21 @@ export class IntelligentDiscussionPlayerComponent extends AudioPlayerComponent i
     super(TaskModel);
   }
 
+  ngOnInit() {
+    this.loadSegmentData();
+  }
+
+  ngAfterViewInit() {
+    this.setPromptTrack('response');
+
+    this.waveform.timeUpdate.subscribe(() => {
+      if (this.waveform.progress >= 100) {
+        this.waveform.pause();
+        this.waveFormisPlaying = false;
+      }
+    });
+  }
+
   setDurationFromAudio(audioURL: string, out: IRegionPositions, previousPosition?: IRegionPositions) {
     const tempAudioElement = new Audio(audioURL);
 
@@ -61,10 +76,6 @@ export class IntelligentDiscussionPlayerComponent extends AudioPlayerComponent i
     });
   }
 
-  ngOnInit() {
-    this.loadSegmentData();
-  }
-
   loadSegmentData() {
     this.segments = {
       responseDuration: { start: 0, end: 0 },
@@ -75,7 +86,6 @@ export class IntelligentDiscussionPlayerComponent extends AudioPlayerComponent i
 
     // set prompt segments
     for (let index = 0; index < this.segments.prompts.length; index++) {
-      // console.log("Setting prompt duration: " + index)
       const element = this.segments.prompts[index];
       let previousDuration = null;
 
@@ -88,29 +98,12 @@ export class IntelligentDiscussionPlayerComponent extends AudioPlayerComponent i
     }
   }
 
-  ngAfterViewInit() {
-    this.setPromptTrack('response');
-
-    this.waveform.timeUpdate.subscribe(() => {
-      if (this.waveform.progress >= 100) {
-        this.waveform.pause();
-        this.waveFormisPlaying = false;
-      }
-    });
-  }
-
   get responseAvailable() {
     return this.discussion.status === 'complete';
   }
 
   get isNotStudent() {
     return this.task.project().unit().my_role !== 'Student';
-  }
-
-  discussionPromptUrls(): string[] {
-    return Array(this.discussion.number_of_prompts)
-      .fill(null)
-      .map((x, i) => this.discussionService.getDiscussionPromptUrl(this.task, this.discussion.id, i));
   }
 
   get responseUrl() {
@@ -126,52 +119,25 @@ export class IntelligentDiscussionPlayerComponent extends AudioPlayerComponent i
     }
   }
 
-  onTrackLoaded(time: number) {
-    this.trackLoadTime = time;
-    // this.waveform.play(this.firstPromptDuration);
-    // this.waveform.pause();
-  }
-
-  setPlaybackRegion(track: string, promptNumber?: number) {
-    if (track === 'prompt') {
-      console.log(track + promptNumber);
-      const region = this.segments.prompts[promptNumber];
-      console.log(region);
-      this.waveform.setRegionStart(region.start);
-      this.waveform.setRegionEnd(region.end);
-    } else {
-      console.log(track + promptNumber);
-      // const region = this.segments.responseDuration.getValue();
-      const responseStart = this.segments.prompts[promptNumber].end;
-      const nextPrompt = this.segments.prompts[promptNumber + 1];
-      // tslint:disable-next-line: no-bitwise
-      const responseEnd = nextPrompt?.start | this.segments.responseDuration.end;
-
-      console.log({ start: responseStart, end: responseEnd });
-      this.waveform.setRegionStart(responseStart);
-      this.waveform.setRegionEnd(responseEnd);
-    }
-  }
-
   setPromptTrack(track: string, promptNumber?: number) {
     if (track === 'prompt') {
-      // this.waveform.trackLoaded.unsubscribe();
       this.waveform.useRegion = false;
-      // this.waveform.useRegion = false;
-      // this.waveform.progress = 0;
       this.playbackSrc.url = this.discussionService.getDiscussionPromptUrl(this.task, this.discussion.id, promptNumber);
-      // this.waveform.setRegionEnd();
     } else {
       this.waveform.useRegion = true;
-      const sub = this.waveform.trackLoaded.subscribe(() => {
+      this.playbackSrc.url = this.responseUrl;
+
+      const onceOffSub = this.waveform.trackLoaded.subscribe(() => {
+        // Get the end time of the first prompt
         const responseStart = this.segments.prompts[0].end;
-        console.log(responseStart, this.segments.responseDuration.end);
+
+        // Set the region
         this.waveform.setRegionStart(responseStart);
         this.waveform.setRegionEnd(this.segments.responseDuration.end);
-        sub.unsubscribe();
+
+        // Don't repeat this if the track is reloaded
+        onceOffSub.unsubscribe();
       });
-      // this.waveform.useRegion = true;
-      this.playbackSrc.url = this.responseUrl;
     }
   }
 
