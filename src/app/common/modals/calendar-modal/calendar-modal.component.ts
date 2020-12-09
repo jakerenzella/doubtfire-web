@@ -31,13 +31,12 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
     private constants: DoubtfireConstants,
     private sanitizer: DomSanitizer,
     @Inject(alertService) private alerts: any,
-    @Inject(projectService) private projectService: any,
+    @Inject(projectService) private ProjectService: any,
     dialogRef: MatDialogRef<CalendarModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 
   ngOnInit() {
-
     // Retrieve current webcal.
     this.working = true;
     this.webcalService.get({}).subscribe((webcal) => {
@@ -46,7 +45,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
     });
 
     // Allow selection of units with active projects.
-    this.projectService.getProjects(false, (projects) => {
+    this.ProjectService.getProjects(false, (projects) => {
       this.projects = projects.filter((p) => p.teachingPeriod()?.active() ?? true);
     });
   }
